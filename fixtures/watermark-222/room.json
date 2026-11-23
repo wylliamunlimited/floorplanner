@@ -1,0 +1,261 @@
+{
+ "schema": "floorplanner/room@0",
+ "name": "Watermark Seaport #222",
+ "unit": "in",
+ "frame": {
+  "origin": "interior corner at entry wall / kitchen wall",
+  "x": "entry wall \u2192 window",
+  "y": "kitchen wall \u2192 bedroom-side wall"
+ },
+ "bounds": {
+  "w": 405.2,
+  "h": 185.5
+ },
+ "measurements": [
+  {
+   "label": "partition (living face) \u2192 window",
+   "value": 140.5,
+   "source": "tape"
+  },
+  {
+   "label": "window wall, column \u2192 bedroom-side wall",
+   "value": 162.5,
+   "source": "tape"
+  },
+  {
+   "label": "same wall along window line",
+   "value": 159,
+   "source": "tape"
+  },
+  {
+   "label": "free kitchen wall, counter end \u2192 column",
+   "value": 112,
+   "source": "tape"
+  },
+  {
+   "label": "sleep alcove inner width",
+   "value": 105,
+   "source": "tape"
+  },
+  {
+   "label": "sleep alcove depth from partition",
+   "value": 109,
+   "source": "tape"
+  },
+  {
+   "label": "big window",
+   "value": 82,
+   "source": "tape"
+  },
+  {
+   "label": "small window",
+   "value": 30,
+   "source": "tape"
+  }
+ ],
+ "notes": [
+  "Traced from leasing PDF (rotated, window on right); scale from tape: 2.71 px/in x, 2.76 px/in y at 200dpi crop.",
+  "Printed bedroom depth 11'5\" disagrees with drawing and tape (~110\"); ignored.",
+  "Unverified: window sill height, window ledge depth."
+ ],
+ "walls": [
+  {
+   "x": 94.5,
+   "y": 0.0,
+   "w": 7.0,
+   "h": 30.4,
+   "id": "kitchen-stub"
+  },
+  {
+   "x": 378.6,
+   "y": 0.0,
+   "w": 26.6,
+   "h": 22.8,
+   "id": "column"
+  },
+  {
+   "x": 148.3,
+   "y": 68.8,
+   "w": 117.0,
+   "h": 5.1,
+   "id": "partition"
+  },
+  {
+   "x": 148.3,
+   "y": 68.8,
+   "w": 5.6,
+   "h": 21.4,
+   "id": "partition-left-stub"
+  },
+  {
+   "x": 260.1,
+   "y": 68.8,
+   "w": 5.2,
+   "h": 84.1,
+   "id": "partition-right-stub"
+  }
+ ],
+ "fixtures": [
+  {
+   "x": -1.5,
+   "y": 0.0,
+   "w": 42.1,
+   "h": 29.7,
+   "id": "wd",
+   "label": "W/D closet"
+  },
+  {
+   "x": 40.6,
+   "y": 0.0,
+   "w": 53.9,
+   "h": 29.0,
+   "id": "pantry",
+   "label": "closet"
+  },
+  {
+   "x": 101.5,
+   "y": 0.0,
+   "w": 24.7,
+   "h": 24.3,
+   "id": "dw",
+   "label": "DW"
+  },
+  {
+   "x": 126.2,
+   "y": 0.0,
+   "w": 44.3,
+   "h": 24.3,
+   "id": "sink",
+   "label": "sink"
+  },
+  {
+   "x": 170.5,
+   "y": 0.0,
+   "w": 31.3,
+   "h": 29.0,
+   "id": "range",
+   "label": "range"
+  },
+  {
+   "x": 201.8,
+   "y": 0.0,
+   "w": 14.8,
+   "h": 24.3,
+   "id": "counter-1"
+  },
+  {
+   "x": 216.6,
+   "y": 0.0,
+   "w": 31.0,
+   "h": 26.1,
+   "id": "ref",
+   "label": "REF"
+  },
+  {
+   "x": 247.6,
+   "y": 0.0,
+   "w": 18.5,
+   "h": 24.3,
+   "id": "counter-2"
+  },
+  {
+   "x": -1.5,
+   "y": 87.7,
+   "w": 114.0,
+   "h": 97.8,
+   "id": "bath-closet-block",
+   "label": "bath + closet (not placeable)"
+  }
+ ],
+ "bath_detail": {
+  "toilet": {
+   "x": 4.1,
+   "y": 101.8,
+   "w": 29.8,
+   "h": 18.5
+  },
+  "vanity": {
+   "x": 4.1,
+   "y": 124.6,
+   "w": 22.1,
+   "h": 27.2
+  },
+  "tub": {
+   "x": 21.0,
+   "y": 156.5,
+   "w": 59.1,
+   "h": 29.0
+  },
+  "door_opening": {
+   "x": 43.2,
+   "y": 87.7,
+   "w": 34.3,
+   "h": 5.4
+  },
+  "closet": {
+   "x": 83.8,
+   "y": 93.1,
+   "w": 26.9,
+   "h": 92.4
+  }
+ },
+ "openings": [
+  {
+   "id": "entry",
+   "wall": "x=0",
+   "y": 34.1,
+   "len": 35.5
+  }
+ ],
+ "keep_clear": [
+  {
+   "x": 0.0,
+   "y": 34.1,
+   "w": 36.2,
+   "h": 35.5,
+   "id": "entry-swing"
+  },
+  {
+   "x": 43.2,
+   "y": 73.9,
+   "w": 34.3,
+   "h": 13.8,
+   "id": "bath-door"
+  },
+  {
+   "x": 112.5,
+   "y": 94.9,
+   "w": 20.3,
+   "h": 88.8,
+   "id": "closet-doors"
+  }
+ ],
+ "windows": [
+  {
+   "wall": "x=max",
+   "y": 22,
+   "len": 82
+  },
+  {
+   "wall": "x=max",
+   "y": 131,
+   "len": 30
+  }
+ ],
+ "zones": [
+  {
+   "x": 112.5,
+   "y": 73.9,
+   "w": 147.6,
+   "h": 111.6,
+   "id": "sleep"
+  },
+  {
+   "id": "living",
+   "x": 265.3,
+   "y": 0,
+   "w": 139.9,
+   "h": 185.5
+  }
+ ]
+}

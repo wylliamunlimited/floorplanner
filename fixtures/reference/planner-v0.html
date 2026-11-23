@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watermark Seaport #222 — layout planner</title>
+<style>
+  :root{--bg:#faf7f2;--ink:#2a2622;--muted:#7a7068;--line:#ddd4c8;--accent:#c0763a;--ok:#3f8f4f;--bad:#c2412f}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif}
+  .app{display:grid;grid-template-columns:230px minmax(0,1fr) 250px;gap:14px;max-width:1500px;margin:0 auto;padding:16px}
+  @media (max-width:1100px){.app{grid-template-columns:1fr}.palette,.inspector{order:2}}
+  h1{font-size:19px;margin:0}
+  .sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}
+  .palette h3,.inspector h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:12px 0 6px;font-weight:600}
+  .palette h3:first-child,.inspector h3:first-child{margin-top:0}
+  .pbtn{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;border:1px solid transparent;background:transparent;border-radius:8px;padding:5px 8px;font:inherit;font-size:13.5px;color:var(--ink);cursor:pointer}
+  .pbtn:hover{background:#f5efe6}
+  .pbtn.on{background:#2a2622;color:#fff}
+  .pbtn small{color:var(--muted);font-size:11.5px}
+  .pbtn.on small{color:#d8cfc4}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .tools{display:flex;gap:6px;flex-wrap:wrap}
+  button.t{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink)}
+  button.t:hover{background:#f5efe6}
+  button.t.dark{background:var(--ink);color:#fff;border-color:var(--ink)}
+  button.t.danger{color:var(--bad)}
+  .status{font-size:13px;padding:8px 10px;border-radius:9px;background:#f5efe6;margin-bottom:10px;min-height:36px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .status kbd{font:inherit;font-size:11.5px;background:#fff;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  svg#plan{width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none;display:block}
+  .field{display:grid;grid-template-columns:60px 1fr;align-items:center;gap:6px;margin:6px 0}
+  .field label{font-size:12.5px;color:var(--muted)}
+  .field input{width:100%;font:inherit;padding:5px 7px;border:1px solid var(--line);border-radius:7px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .list{list-style:none;padding:0;margin:0;max-height:260px;overflow:auto}
+  .list li{display:flex;justify-content:space-between;padding:5px 6px;border-radius:7px;cursor:pointer;font-size:13px}
+  .list li:hover{background:#f5efe6}
+  .list li.on{background:#efe4d4}
+  .list li small{color:var(--muted)}
+  .hint{font-size:12px;color:var(--muted)}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+  .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:4px;border:1px solid #0002}
+  textarea{width:100%;height:120px;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:8px;padding:8px}
+  .modal{position:fixed;inset:0;background:#0006;display:none;align-items:center;justify-content:center;z-index:10}
+  .modal .card{width:min(520px,92vw)}
+  .warn{color:var(--bad);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="card palette" id="palette"></aside>
+
+  <main>
+    <div class="top">
+      <div>
+        <h1>Watermark Seaport #222 — layout planner</h1>
+        <p class="sub">To scale from your plan and tape measurements (140.5″ partition→window · 162.5″ window wall · 112″ free wall · 105″ × 109″ sleep area).</p>
+      </div>
+      <div class="tools">
+        <button class="t" id="tDims">Dimensions: on</button>
+        <button class="t" id="tClr">Clearances: on</button>
+        <button class="t" id="tCopy">Copy layout</button>
+        <button class="t" id="tImport">Import</button>
+        <button class="t danger" id="tClear">Clear all</button>
+      </div>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="card">
+      <svg id="plan" viewBox="-24 -30 470 248" role="img" aria-label="Interactive floor plan"></svg>
+      <div class="legend">
+        <span><i class="sw" style="background:#a8d0ea"></i>window</span>
+        <span><i class="sw" style="background:#3f8f4f55;border-color:#3f8f4f"></i>fits</span>
+        <span><i class="sw" style="background:#c2412f55;border-color:#c2412f"></i>blocked</span>
+        <span><i class="sw" style="background:repeating-linear-gradient(45deg,#c2412f22 0 2px,transparent 2px 5px)"></i>keep clear (door swing)</span>
+        <span>clearance lines turn amber under 30″ · grid = 1 ft</span>
+      </div>
+    </div>
+  </main>
+
+  <aside class="card inspector" id="inspector"></aside>
+</div>
+
+<div class="modal" id="modal"><div class="card">
+  <h3 style="margin:0 0 6px;font-size:15px" id="mTitle"></h3>
+  <p class="hint" id="mHint"></p>
+  <textarea id="mText"></textarea>
+  <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px">
+    <button class="t" id="mCancel">Close</button><button class="t dark" id="mOk">Copy</button>
+  </div>
+</div></div>
+
+<div class="modal" id="pmodal"><div class="card" style="width:min(560px,94vw)">
+  <h3 style="margin:0 0 4px;font-size:15px">Add a real product</h3>
+  <p class="hint" style="margin:0 0 8px">Easiest: paste the link in the chat and Claude adds it for you. Or paste the product JSON Claude gives you, or type the listing's numbers below.</p>
+  <textarea id="pJson" style="height:64px" placeholder='{"name":"…","w":84,"d":62,"shape":"sectional",…}'></textarea>
+  <div class="row2" style="margin-top:6px">
+    <div class="field"><label>Name</label><input id="pName"></div><div class="field"><label>Link</label><input id="pUrl" placeholder="https://…"></div>
+    <div class="field"><label>Width″</label><input id="pW" type="number" step="0.5"></div><div class="field"><label>Depth″</label><input id="pD" type="number" step="0.5"></div>
+    <div class="field"><label>Height″</label><input id="pH" type="number" step="0.5"></div><div class="field"><label>Back ht″</label><input id="pBack" type="number" step="0.5"></div>
+    <div class="field"><label>Shape</label><select id="pShape"></select></div><div class="field"><label>Color</label><select id="pColor"></select></div>
+    <div class="field"><label>Chaise</label><select id="pChaise"><option value="right">right</option><option value="left">left</option></select></div><div class="field"><label>Price</label><input id="pPrice"></div>
+  </div>
+  <p class="warn" id="pErr"></p>
+  <div style="display:flex;gap:6px;justify-content:flex-end"><button class="t" id="pCancel">Cancel</button><button class="t dark" id="pSave">Add &amp; place</button></div>
+</div></div>
+
+<script>
+/* ================= geometry =================
+   Traced from the leasing PDF (rotated so the window is on the right),
+   scaled to the tape measurements. Units: inches.
+   x: entry wall (0) → window (W).  y: kitchen wall (0) → bedroom-side wall (H). */
+const PX0=40, PY0=28, SX=2.71, SY=2.76;
+const X=p=>+((p-PX0)/SX).toFixed(1), Y=p=>+((p-PY0)/SY).toFixed(1);
+const B=(x1,y1,x2,y2)=>({x:X(x1),y:Y(y1),w:+(X(x2)-X(x1)).toFixed(1),h:+(Y(y2)-Y(y1)).toFixed(1)});
+const W=X(1138), H=Y(540);                    // ≈405 × 185.5
+
+// solid things furniture can't overlap
+const OBST = [
+  {...B(36,28,150,110),  kind:'fix', label:'W/D'},
+  {...B(150,28,296,108), kind:'fix', label:'closet'},
+  {...B(296,28,315,112), kind:'wall'},
+  {...B(315,28,382,95),  kind:'fix', label:'DW'},
+  {...B(382,28,502,95),  kind:'fix', label:'sink'},
+  {...B(502,28,587,108), kind:'fix', label:'range'},
+  {...B(587,28,627,95),  kind:'fix', label:''},
+  {...B(627,28,711,100), kind:'fix', label:'REF'},
+  {...B(711,28,761,95),  kind:'fix', label:''},
+  {...B(1066,28,1138,91),kind:'wall'},                        // column
+  {...B(36,270,345,540), kind:'bath'},                        // bath + closet block
+  {...B(442,218,759,232),kind:'wall'},                        // partition
+  {...B(442,218,457,277),kind:'wall'},                        // left stub
+  {...B(745,218,759,450),kind:'wall'},                        // right stub
+];
+// soft zones: door swings / closet access — blocked for furniture
+const CLEAR = [
+  {...B(40,122,138,220), label:'entry door swing'},
+  {...B(157,232,250,270), label:'bath door'},
+  {...B(345,290,400,535), label:'closet doors'},
+];
+
+const WIN = [{y:22,h:82,label:'82″'},{y:131,h:30,label:'30″'}];
+
+/* ================= catalog ================= */
+const CAT = {
+  // sleep
+  bed_queen:{g:'Sleep',name:'Queen bed',w:64,d:84,draw:'bed'},
+  bed_full:{g:'Sleep',name:'Full bed',w:57,d:80,draw:'bed'},
+  bed_king:{g:'Sleep',name:'King bed',w:80,d:84,draw:'bed'},
+  bed_twin:{g:'Sleep',name:'Twin bed',w:41,d:78,draw:'bed'},
+  nightstand:{g:'Sleep',name:'Nightstand',w:18,d:16,draw:'case'},
+  dresser:{g:'Sleep',name:'Dresser',w:48,d:18,draw:'case'},
+  // living
+  sofa:{g:'Living',name:'Sofa',w:84,d:36,draw:'sofa'},
+  sectional:{g:'Living',name:'Chaise sectional',w:84,d:62,draw:'sectional'},
+  curved:{g:'Living',name:'Curved sofa',w:92,d:40,draw:'curved'},
+  floorsofa:{g:'Living',name:'Floor-block sofa',w:84,d:34,draw:'floorsofa'},
+  loveseat:{g:'Living',name:'Loveseat',w:60,d:34,draw:'sofa'},
+  armchair:{g:'Living',name:'Armchair',w:32,d:32,draw:'sofa'},
+  ottoman:{g:'Living',name:'Ottoman',w:24,d:24,draw:'soft'},
+  coffee:{g:'Living',name:'Coffee table',w:40,d:22,draw:'table'},
+  coffee_round:{g:'Living',name:'Round coffee table',w:32,d:32,draw:'round'},
+  side:{g:'Living',name:'Side table',w:18,d:18,draw:'round'},
+  tv:{g:'Living',name:'TV stand',w:60,d:16,draw:'case'},
+  rug:{g:'Living',name:'Rug 5×8',w:60,d:96,draw:'rug',layer:0},
+  // work & dining
+  longtable:{g:'Work & dining',name:'Long table',w:72,d:30,draw:'table'},
+  desk:{g:'Work & dining',name:'Desk',w:48,d:24,draw:'table'},
+  dtable_round:{g:'Work & dining',name:'Round dining table',w:36,d:36,draw:'round'},
+  chair:{g:'Work & dining',name:'Dining chair',w:18,d:20,draw:'chair'},
+  deskchair:{g:'Work & dining',name:'Desk chair',w:25,d:25,draw:'deskchair'},
+  shelf:{g:'Work & dining',name:'Bookshelf',w:30,d:12,draw:'case'},
+  // decor & misc
+  lamp:{g:'Decor & misc',name:'Floor lamp',w:12,d:12,draw:'lamp'},
+  plant:{g:'Decor & misc',name:'Plant',w:16,d:16,draw:'plant'},
+  vacuum:{g:'Decor & misc',name:'Robot vacuum dock',w:14,d:16,draw:'vacuum'},
+  box:{g:'Decor & misc',name:'Custom box',w:24,d:24,draw:'box'},
+};
+
+/* products Claude looked up from links you pasted (top-down shape built from the listing's dimensions) */
+const PRESET_PRODUCTS = [];
+const COLORS={cream:['#efe5d0','#8a7a5c'],gray:['#c4c6c9','#6d7176'],beige:['#e9dcc6','#8d7b60'],white:['#f7f4ef','#8b8178'],black:['#4a4542','#2a2622'],green:['#b9c7ad','#5f7a52'],blue:['#b7c7d6','#5d7389'],brown:['#b08b66','#6b4e33'],wood:['#caa982','#7a5c3c'],pink:['#e8c9c0','#9a6b5f'],rust:['#d2a07c','#8a5636']};
+const SHAPES={sofa:'Sofa (arms + cushions)',sectional:'Chaise sectional (L)',curved:'Curved sofa',floorsofa:'Floor / block sofa',bed:'Bed',table:'Table / desk',round:'Round / oval table',case:'Cabinet / shelf / dresser',soft:'Ottoman / pouf',chair:'Chair',deskchair:'Desk chair',rug:'Rug',lamp:'Lamp',plant:'Plant',box:'Generic box'};
+const cat=t=>CAT[t]||(S.products||[]).find(p=>p.key===t)||{name:'item',w:24,d:24,draw:'box'};
+
+/* ================= state ================= */
+const KEY='wm222-planner-v1';
+let S = {items:[], products:[], dims:true, clr:true};
+try{ const s=JSON.parse(localStorage.getItem(KEY)||'null'); if(s&&Array.isArray(s.items)) S=Object.assign(S,s);}catch(e){}
+S.products=S.products||[]; PRESET_PRODUCTS.forEach(p=>{ const i=S.products.findIndex(q=>q.key===p.key); if(i<0) S.products.push({...p,g:'My products'}); else S.products[i]={...p,g:'My products'}; });
+let mode='idle';            // idle | place | drag
+let pending=null;           // {type,label,w,d,rot,cx,cy,shown}
+let selId=null, drag=null, uid=Date.now()%100000;
+const save=()=>{ try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} };
+
+/* ================= svg helpers ================= */
+const NS='http://www.w3.org/2000/svg';
+const svg=document.getElementById('plan');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const R=(x,y,w,h,a='')=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" ${a}/>`;
+const T=(x,y,s,fs=5,fill='#7a7068',extra='')=>`<text x="${x}" y="${y}" font-size="${fs}" fill="${fill}" text-anchor="middle" ${extra}>${esc(s)}</text>`;
+const rr=o=>R(o.x,o.y,o.w,o.h);
+
+/* ================= base plan ================= */
+function base(){
+  let s=`<defs>
+    <marker id="ar" viewBox="0 0 6 6" refX="3" refY="3" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0 0L6 3L0 6z" fill="#c0763a"/></marker>
+    <linearGradient id="day" x1="1" x2="0"><stop offset="0" stop-color="#ffe2a0" stop-opacity=".5"/><stop offset="1" stop-color="#ffe2a0" stop-opacity="0"/></linearGradient>
+    <pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#c2412f08"/><line x1="0" y1="0" x2="0" y2="4" stroke="#c2412f33" stroke-width="1.2"/></pattern>
+  </defs>`;
+  s+=R(0,0,W,H,'fill="#f4ede2"');
+  const bed=B(345,232,745,540); s+=R(bed.x,bed.y,bed.w,bed.h,'fill="#ede3d4"');
+  s+=R(X(700),Y(91),W-X(700),H-Y(91),'fill="url(#day)"');
+  let g=''; for(let x=0;x<=W;x+=12) g+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#0000000b" stroke-width=".35"/>`;
+  for(let y=0;y<=H;y+=12) g+=`<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#0000000b" stroke-width=".35"/>`;
+  s+=g;
+  // keep-clear zones
+  CLEAR.forEach(c=>s+=R(c.x,c.y,c.w,c.h,'fill="url(#hatch)"'));
+  // kitchen fixtures
+  const fx='fill="#fff" stroke="#8b8178" stroke-width=".6"';
+  OBST.filter(o=>o.kind==='fix').forEach(o=>{ s+=R(o.x,o.y,o.w,o.h,fx); if(o.label&&o.label!=='sink'&&o.label!=='range') s+=T(o.x+o.w/2,o.y+o.h/2+1.8,o.label,4.8); });
+  const sb=B(398,49,448,91); s+=R(sb.x,sb.y,sb.w,sb.h,'rx="3" fill="none" stroke="#8b8178" stroke-width=".6"');
+  [[527,52],[562,52],[527,82],[562,82]].forEach(([a,b])=>s+=`<circle cx="${X(a)}" cy="${Y(b)}" r="3.6" fill="none" stroke="#8b8178" stroke-width=".6"/>`);
+  const cl=OBST[1]; for(let i=0;i<4;i++) s+=`<line x1="${cl.x+cl.w-22+i*3}" y1="${cl.y+20}" x2="${cl.x+cl.w-26+i*3}" y2="${cl.y+30}" stroke="#8b8178" stroke-width=".5"/>`;
+  s+=T(X(560),Y(150),'KITCHEN',5.2,'#9a8a76','letter-spacing=".6"');
+  // bathroom + closet
+  const bath=B(51,285,257,540), clo=B(267,285,340,540);
+  s+=R(bath.x,bath.y,bath.w,bath.h,'fill="#e9e6e1"'); s+=R(clo.x,clo.y,clo.w,clo.h,'fill="#fff" stroke="#8b8178" stroke-width=".5"');
+  s+=`<line x1="${X(303)}" y1="${clo.y}" x2="${X(303)}" y2="${clo.y+clo.h}" stroke="#8b8178" stroke-width=".4"/>`;
+  for(let i=0;i<4;i++) s+=`<line x1="${X(290)}" y1="${Y(500)+i*2.2}" x2="${X(316)}" y2="${Y(492)+i*2.2}" stroke="#8b8178" stroke-width=".4"/>`;
+  s+=T(clo.x+clo.w/2,Y(410),'closet',4.2,'#7a7068',`transform="rotate(-90 ${clo.x+clo.w/2} ${Y(410)})"`);
+  const tank=B(51,309,70,360); s+=R(tank.x,tank.y,tank.w,tank.h,'rx="2" '+fx);
+  s+=`<ellipse cx="${X(100)}" cy="${Y(334)}" rx="${30/SX/1.05}" ry="${22/SY}" ${fx}/>`;
+  const van=B(51,372,111,447); s+=R(van.x,van.y,van.w,van.h,fx); s+=`<circle cx="${X(85)}" cy="${Y(410)}" r="${21/SX}" ${fx}/>`;
+  const tub=B(97,460,257,540); s+=R(tub.x,tub.y,tub.w,tub.h,fx); s+=R(tub.x+2.5,tub.y+3,tub.w-5,tub.h-6,'rx="12" fill="none" stroke="#8b8178" stroke-width=".6"');
+  s+=T(X(170),Y(400),'BATH',5,'#7a7068');
+  // walls
+  const wl='fill="#2a2622"';
+  s+=R(-5,-5,W+14,5,wl); s+=R(-5,H,W+14,5,wl);
+  s+=R(-5,0,5,Y(122),wl); s+=R(-5,Y(220),5,H-Y(220),wl);           // entry gap
+  s+=R(X(36),Y(270),X(157)-X(36),Y(285)-Y(270),wl); s+=R(X(250),Y(270),X(345)-X(250),Y(285)-Y(270),wl);
+  s+=R(X(250),Y(270),2,Y(285)-Y(270),wl);
+  s+=`<line x1="${X(157)}" y1="${Y(277)}" x2="${X(250)}" y2="${Y(277)}" stroke="#2a2622" stroke-width=".8"/>`; // bath door
+  s+=R(X(36),Y(285),X(51)-X(36),H-Y(285),wl);
+  s+=R(X(257),Y(285),X(267)-X(257),H-Y(285),wl);
+  s+=R(X(340),Y(285),X(345)-X(340),Y(300)-Y(285),wl); s+=R(X(340),Y(520),X(345)-X(340),H-Y(520),wl);
+  s+=`<line x1="${X(342)}" y1="${Y(300)}" x2="${X(342)}" y2="${Y(520)}" stroke="#2a2622" stroke-width=".6"/>`; // closet doors
+  OBST.filter(o=>o.kind==='wall').forEach(o=>s+=R(o.x,o.y,o.w,o.h,wl));
+  s+=R(W,0,8,H,wl);
+  WIN.forEach(w=>s+=R(W,w.y,8,w.h,'fill="#a8d0ea" stroke="#6fa6c9" stroke-width=".5"'));
+  // entry door
+  s+=`<path d="M0 ${Y(122)} A${Y(220)-Y(122)} ${Y(220)-Y(122)} 0 0 1 ${Y(220)-Y(122)} ${Y(220)}" fill="none" stroke="#9a9088" stroke-width=".5" stroke-dasharray="1.5 1.5"/>`;
+  s+=T(-12,(Y(122)+Y(220))/2,'ENTRY',4.5,'#7a7068',`transform="rotate(-90 -12 ${(Y(122)+Y(220))/2})"`);
+  s+=T(W+30,H/2,'STREET →',5,'#a38f78',`transform="rotate(90 ${W+30} ${H/2})" letter-spacing="1"`);
+  s+=T(X(595),Y(400),'SLEEP',5.2,'#9a8a76','letter-spacing=".6"');
+  return s;
+}
+function dimsLayer(){
+  if(!S.dims) return '';
+  let s='';
+  const dim=(x1,y1,x2,y2,l)=>{ s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#c0763a" stroke-width=".5" marker-start="url(#ar)" marker-end="url(#ar)"/>`;
+    const v=x1===x2; s+=T((x1+x2)/2+(v?3:0),(y1+y2)/2+(v?1.5:-1.8),l,4.2,'#c0763a',v?`transform="rotate(90 ${(x1+x2)/2+3} ${(y1+y2)/2+1.5})"`:''); };
+  dim(X(761),-12,X(1066),-12,'112″ free wall');
+  dim(X(442),-22,X(759),-22,'partition');
+  dim(X(457),Y(256),X(745),Y(256),'105″');
+  dim(X(600),Y(232),X(600),H,'109″');
+  dim(X(759),H-8,W,H-8,'140.5″');
+  dim(W+18,Y(91),W+18,H,'162.5″');
+  WIN.forEach(w=>s+=T(W+12,w.y+w.h/2,w.label,4,'#3f7fa6',`transform="rotate(90 ${W+12} ${w.y+w.h/2})"`));
+  return `<g opacity=".95" pointer-events="none">${s}</g>`;
+}
+
+/* ================= furniture drawing (local frame: w × d, back/headboard at y=0) ================= */
+const ST='stroke="#4a423b" stroke-width=".6"';
+function shape(kind,w,d,o={}){
+  let s=''; const CC=COLORS[o.color]; const cf=(def)=>CC?`fill="${CC[0]}" stroke="${CC[1]}" stroke-width=".7"`:def; const cs=(def)=>CC?CC[1]:def;
+  switch(kind){
+    case 'bed': {
+      s+=R(0,0,w,d,`rx="2" fill="#fff" ${ST}`); s+=R(0,0,w,5,CC?cf(''):`fill="#d8cbb8" ${ST}`);
+      const pw=w>=50?(w-14)/2:w-10; const n=w>=50?2:1;
+      for(let i=0;i<n;i++) s+=R(5+i*(pw+4),8,pw,11,`rx="3" fill="#fff" stroke="#4a423b" stroke-width=".5"`);
+      s+=R(0,d*0.42,w,d*0.58,`fill="#efe6d6" ${ST}`);
+      s+=`<line x1="0" y1="${d*0.42+5}" x2="${w}" y2="${d*0.42+5}" stroke="#4a423b" stroke-width=".35"/>`; break; }
+    case 'sofa': {
+      const arm=o.arms??Math.min(7,w*0.12), f=cf('fill="#efe5d0" stroke="#8a7a5c" stroke-width=".7"'), sk=cs('#8a7a5c');
+      s+=R(0,0,w,d,`rx="3" ${f}`); s+=R(arm,0,w-2*arm,Math.min(8,d*0.25),`rx="1.5" ${f}`);
+      s+=R(0,0,arm,d,`rx="2.5" ${f}`); s+=R(w-arm,0,arm,d,`rx="2.5" ${f}`);
+      const n=o.seats||(w>70?3:w>45?2:1), cw=(w-2*arm)/n;
+      for(let i=0;i<n;i++) s+=R(arm+i*cw+.6,Math.min(9,d*.28),cw-1.2,d-Math.min(10,d*.3),`rx="2" fill="none" stroke="${sk}" stroke-width=".45"`); break; }
+    case 'sectional': {
+      const md=Math.min(o.seatD||36,d), cw=o.chaiseW||Math.min(32,w*0.4), cx=o.chaise==='left'?0:w-cw, a=o.arms??7, f=cf('fill="#efe5d0" stroke="#8a7a5c" stroke-width=".7"'), sk=cs('#8a7a5c');
+      s+=R(cx,0,cw,d,`rx="3" ${f}`); s+=R(cx+(o.chaise==='left'?a:2),md,cw-a-2,d-md-3,`rx="2" fill="none" stroke="${sk}" stroke-width=".45"`);
+      s+=R(0,0,w,md,`rx="3" ${f}`); s+=R(a,0,w-2*a,8,`rx="1.5" ${f}`); if(a>0){ s+=R(0,0,a,md,`rx="2.5" ${f}`); s+=R(w-a,0,a,md,`rx="2.5" ${f}`); }
+      const n=o.seats||3, c=(w-2*a)/n; for(let i=0;i<n;i++) s+=R(a+i*c+.6,9,c-1.2,md-10,`rx="2" fill="none" stroke="${sk}" stroke-width=".45"`); break; }
+    case 'curved': {
+      const f=cf('fill="#c4c6c9" stroke="#6d7176" stroke-width=".7"');
+      s+=`<path d="M0 ${d*.28} Q${w/2} ${-d*.2} ${w} ${d*.28} L${w} ${d} Q${w/2} ${d*.68} 0 ${d} Z" ${f}/>`;
+      s+=`<path d="M4 ${d*.42} Q${w/2} ${d*.02} ${w-4} ${d*.42}" fill="none" stroke="${cs('#6d7176')}" stroke-width=".55"/>`; break; }
+    case 'floorsofa': {
+      const f=cf('fill="#e9dcc6" stroke="#8d7b60" stroke-width=".7"');
+      s+=R(0,0,w,Math.min(6,d*.2),`rx="2" ${f}`); const n=w>60?2:1;
+      for(let i=0;i<n;i++) s+=R(i*w/n,Math.min(6,d*.2),w/n,d-Math.min(6,d*.2),`rx="3" ${f}`); break; }
+    case 'soft': s+=R(0,0,w,d,`rx="${Math.min(w,d)*0.25}" ${cf('fill="#efe5d0" stroke="#8a7a5c" stroke-width=".7"')}`); break;
+    case 'table': s+=R(0,0,w,d,`rx="2" ${cf('fill="#caa982" stroke="#7a5c3c" stroke-width=".7"')}`); break;
+    case 'round': s+=`<ellipse cx="${w/2}" cy="${d/2}" rx="${w/2}" ry="${d/2}" ${cf('fill="#d9c3a3" stroke="#7a5c3c" stroke-width=".7"')}/>`; break;
+    case 'case': s+=R(0,0,w,d,`rx="1" ${cf('fill="#caa982" stroke="#7a5c3c" stroke-width=".7"')}`)+`<line x1="${w*.5}" y1="1.5" x2="${w*.5}" y2="${d-1.5}" stroke="#7a5c3c" stroke-width=".35"/>`; break;
+    case 'chair': s+=R(0,0,w,d,`rx="4" fill="#fff" ${ST}`)+R(0,0,w,4,`rx="1.5" fill="#e9e3da" stroke="#4a423b" stroke-width=".5"`); break;
+    case 'deskchair': s+=`<ellipse cx="${w/2}" cy="${d/2+1}" rx="${w/2-1}" ry="${d/2-1}" fill="#fff" ${ST}/>`+R(w*.15,0,w*.7,5,`rx="2" fill="#e9e3da" stroke="#4a423b" stroke-width=".5"`); break;
+    case 'rug': s+=R(0,0,w,d,`rx="3" fill="#e7d6bd" fill-opacity=".6" stroke="#cdb895" stroke-width=".6" stroke-dasharray="2 1.5"`); break;
+    case 'lamp': s+=`<circle cx="${w/2}" cy="${d/2}" r="${w*0.9}" fill="#fff1c9" opacity=".85"/><circle cx="${w/2}" cy="${d/2}" r="${w*.32}" fill="#fff" ${ST}/>`; break;
+    case 'plant': s+=`<circle cx="${w/2}" cy="${d/2}" r="${w/2}" fill="#9bb38c" stroke="#5f7a52" stroke-width=".6"/><circle cx="${w*.38}" cy="${d*.38}" r="${w*.2}" fill="#b6c9a8"/>`; break;
+    case 'vacuum': s+=R(0,0,w,4,`fill="#5b5550"`)+`<circle cx="${w/2}" cy="${d/2+2}" r="${Math.min(w,d)/2-1}" fill="#fff" ${ST}/>`; break;
+    default: s+=R(0,0,w,d,`rx="1.5" fill="#f1ebe2" ${ST}`);
+  }
+  return s;
+}
+// collision parts in local frame
+function parts(kind,w,d,o={}){
+  if(kind==='sectional'){ const md=Math.min(o.seatD||36,d), cw=o.chaiseW||Math.min(32,w*0.4), cx=o.chaise==='left'?0:w-cw; return [{x:0,y:0,w:w,h:md},{x:cx,y:md,w:cw,h:d-md}]; }
+  return [{x:0,y:0,w,h:d}];
+}
+const fw=it=>it.rot%180?it.d:it.w, fd=it=>it.rot%180?it.w:it.d;
+const bbox=it=>({x:it.cx-fw(it)/2,y:it.cy-fd(it)/2,w:fw(it),h:fd(it)});
+function worldParts(it){
+  const th=it.rot*Math.PI/180, c=Math.round(Math.cos(th)), s=Math.round(Math.sin(th));
+  const C=cat(it.type); return parts(C.draw,it.w,it.d,C.opt||{}).map(p=>{
+    const pts=[[p.x,p.y],[p.x+p.w,p.y],[p.x,p.y+p.h],[p.x+p.w,p.y+p.h]].map(([x,y])=>{ x-=it.w/2; y-=it.d/2; return [it.cx+x*c-y*s, it.cy+x*s+y*c]; });
+    const xs=pts.map(q=>q[0]), ys=pts.map(q=>q[1]);
+    return {x:Math.min(...xs),y:Math.min(...ys),w:Math.max(...xs)-Math.min(...xs),h:Math.max(...ys)-Math.min(...ys)};
+  });
+}
+const hit=(a,b)=>a.x<b.x+b.w-0.01&&b.x<a.x+a.w-0.01&&a.y<b.y+b.h-0.01&&b.y<a.y+a.h-0.01;
+const layerOf=it=>cat(it.type).layer??(cat(it.type).draw==='rug'?0:1);
+function check(it){
+  const P=worldParts(it); const why=new Set();
+  for(const p of P){
+    if(p.x<-0.01||p.y<-0.01||p.x+p.w>W+0.01||p.y+p.h>H+0.01) why.add('outside the room');
+    for(const o of OBST) if(hit(p,o)) why.add(o.kind==='wall'?'hits a wall':o.kind==='bath'?'hits the bath/closet':'hits '+(o.label||'the counter'));
+    if(layerOf(it)===1) for(const c of CLEAR) if(hit(p,c)) why.add('blocks '+c.label);
+    if(layerOf(it)===1) for(const o of S.items){ if(o.id===it.id||layerOf(o)===0) continue; for(const q of worldParts(o)) if(hit(p,q)) why.add('overlaps '+o.label); }
+  }
+  return [...why];
+}
+
+/* ================= rendering ================= */
+function itemSVG(it,cls,color){
+  const C=cat(it.type), kind=C.draw, o=C.opt||{};
+  let g=`<g transform="translate(${it.cx} ${it.cy}) rotate(${it.rot}) translate(${-it.w/2} ${-it.d/2})">${shape(kind,it.w,it.d,o)}`;
+  if(color) parts(kind,it.w,it.d,o).forEach(p=>g+=R(p.x,p.y,p.w,p.h,`fill="${color}" fill-opacity=".28" stroke="${color}" stroke-width="1"`));
+  g+='</g>';
+  const bb=bbox(it), lbl=it.label;
+  const fs=Math.max(2.6,Math.min(4.4,bb.w/(lbl.length*0.62)));
+  if(bb.w>14&&bb.h>8 && kind!=='lamp'&&kind!=='plant') g+=T(it.cx,it.cy+fs*0.35,lbl,fs,'#3a332d','pointer-events="none" paint-order="stroke" stroke="#ffffffcc" stroke-width="1.6"');
+  return `<g class="${cls}" data-id="${it.id??''}" style="cursor:${mode==='place'?'crosshair':'grab'}">${g}</g>`;
+}
+function clearances(it){
+  if(!S.clr) return '';
+  const a=bbox(it); let s='';
+  const blockers=[...OBST, ...(layerOf(it)?S.items.filter(o=>o.id!==it.id&&layerOf(o)===1).flatMap(worldParts):[])];
+  const dirs=[['L'],['R'],['U'],['D']];
+  const out=[];
+  // left/right
+  let L={g:a.x,at:0}, Rr={g:W-(a.x+a.w),at:W}, U={g:a.y,at:0}, D={g:H-(a.y+a.h),at:H};
+  for(const b of blockers){
+    const yo=b.y<a.y+a.h-0.01&&a.y<b.y+b.h-0.01, xo=b.x<a.x+a.w-0.01&&a.x<b.x+b.w-0.01;
+    if(yo){ if(b.x+b.w<=a.x+0.01&&a.x-(b.x+b.w)<L.g) L={g:a.x-(b.x+b.w)}; if(b.x>=a.x+a.w-0.01&&b.x-(a.x+a.w)<Rr.g) Rr={g:b.x-(a.x+a.w)}; }
+    if(xo){ if(b.y+b.h<=a.y+0.01&&a.y-(b.y+b.h)<U.g) U={g:a.y-(b.y+b.h)}; if(b.y>=a.y+a.h-0.01&&b.y-(a.y+a.h)<D.g) D={g:b.y-(a.y+a.h)}; }
+  }
+  const my=a.y+a.h/2, mx=a.x+a.w/2;
+  const line=(x1,y1,x2,y2,g)=>{ if(g<0.5) return; const c=g<30?'#d08a1c':'#8a7f75';
+    s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width=".55" stroke-dasharray="1.6 1.2"/>`;
+    s+=`<text x="${(x1+x2)/2}" y="${(y1+y2)/2-1.2}" font-size="4" fill="${c}" text-anchor="middle" paint-order="stroke" stroke="#fff" stroke-width="1.4" font-weight="600">${Math.round(g)}″</text>`; };
+  line(a.x-L.g,my,a.x,my,L.g); line(a.x+a.w,my,a.x+a.w+Rr.g,my,Rr.g);
+  line(mx,a.y-U.g,mx,a.y,U.g); line(mx,a.y+a.h,mx,a.y+a.h+D.g,D.g);
+  return `<g pointer-events="none">${s}</g>`;
+}
+function render(){
+  const rugs=S.items.filter(i=>layerOf(i)===0), rest=S.items.filter(i=>layerOf(i)!==0);
+  let s=base()+dimsLayer();
+  const draw=it=>{ const isSel=it.id===selId; let col=null;
+    if(drag&&drag.id===it.id) col=check(it).length?'#c2412f':'#3f8f4f';
+    else if(isSel) col='#c0763a';
+    return itemSVG(it,'item',col); };
+  rugs.forEach(it=>s+=draw(it)); rest.forEach(it=>s+=draw(it));
+  const active = mode==='place'&&pending&&pending.shown ? pending : (selId? S.items.find(i=>i.id===selId):null);
+  if(active) s+=clearances(active);
+  if(mode==='place'&&pending&&pending.shown){ const bad=check(pending).length; s+=`<g opacity=".92" pointer-events="none">${itemSVG(pending,'ghost',bad?'#c2412f':'#3f8f4f')}</g>`; }
+  svg.innerHTML=s;
+  renderStatus(); renderInspector(); renderPalette();
+}
+
+/* ================= UI panels ================= */
+function renderPalette(){
+  const groups={'My products':S.products.map(p=>[p.key,p])}; Object.entries(CAT).forEach(([k,v])=>(groups[v.g]??=[]).push([k,v]));
+  let h=`<h3>Thinking about…</h3><p class="hint" style="margin:0 0 6px">Pick a piece, then click the plan to place it.</p><button class="t" id="addProd" style="width:100%;margin:2px 0 4px">+ Add a real product</button>`;
+  if(!S.products.length) groups['My products']=[];
+  for(const [g,arr] of Object.entries(groups)){ h+=`<h3>${g}</h3>`; if(!arr.length){ h+=`<p class="hint" style="margin:0 0 4px">Paste a product link in the chat. Claude looks up the size and adds it here.</p>`; continue; } arr.forEach(([k,v])=>h+=`<button class="pbtn ${mode==='place'&&pending?.type===k?'on':''}" data-k="${k}">${v.name}<small>${v.w}×${v.d}</small></button>`); }
+  const el=document.getElementById('palette'); el.innerHTML=h;
+  el.querySelectorAll('.pbtn').forEach(b=>b.onclick=()=>startPlace(b.dataset.k));
+  document.getElementById('addProd').onclick=openProd;
+}
+function renderStatus(){
+  const st=document.getElementById('status');
+  if(mode==='place'&&pending){
+    const why=pending.shown?check(pending):[];
+    st.innerHTML=`<span class="dot" style="background:${!pending.shown?'#aaa':why.length?'#c2412f':'#3f8f4f'}"></span><b>Placing ${esc(pending.label)}</b> (${pending.w}×${pending.d}″)
+      ${pending.shown?(why.length?`<span class="warn">${esc(why.join(' · '))}</span>`:'<span style="color:#3f8f4f">fits, click to place</span>'):'move over the plan'}
+      <span style="margin-left:auto" class="hint"><kbd>R</kbd> rotate · <kbd>Esc</kbd> cancel · on touch: tap to preview, tap again to place</span>`;
+  } else if(selId){
+    const it=S.items.find(i=>i.id===selId); const why=it?check(it):[];
+    st.innerHTML=`<span class="dot" style="background:${why.length?'#c2412f':'#c0763a'}"></span><b>${esc(it.label)}</b> selected ${why.length?`<span class="warn">${esc(why.join(' · '))}</span>`:''}
+      <span style="margin-left:auto" class="hint">drag to move · <kbd>R</kbd> rotate · arrows nudge 1″ (<kbd>Shift</kbd> 6″) · <kbd>Del</kbd> remove</span>`;
+  } else st.innerHTML=`<span class="hint">${S.items.length?`${S.items.length} piece${S.items.length>1?'s':''} placed. Click one to edit it, or pick a new piece from the left.`:'Blank plan. Pick what you\'re thinking about from the left.'}</span>`;
+}
+function renderInspector(){
+  const el=document.getElementById('inspector');
+  const it = mode==='place'?pending:S.items.find(i=>i.id===selId);
+  let h='';
+  if(it){
+    h+=`<h3>${mode==='place'?'Placing':'Selected'}</h3>
+      <div class="field"><label>Name</label><input id="iLabel" value="${esc(it.label)}"></div>
+      <div class="field"><label>Width″</label><input id="iW" type="number" min="4" max="200" step="0.5" value="${it.w}"></div>
+      <div class="field"><label>Depth″</label><input id="iD" type="number" min="4" max="200" step="0.5" value="${it.d}"></div>
+      <div class="row2" style="margin-top:8px"><button class="t" id="iRot">Rotate 90°</button>${mode==='place'?'<button class="t" id="iCancel">Cancel</button>':'<button class="t" id="iDup">Duplicate</button>'}</div>
+      ${mode!=='place'?'<button class="t danger" id="iDel" style="width:100%;margin-top:6px">Remove</button>':''}
+      <p class="hint" style="margin-top:8px">Width runs along the back or headboard, depth runs front to back. Type your real measurements here.</p>`;
+    const C=cat(it.type);
+    if(C.url||C.h||C.price){ h+=`<h3>Product</h3><div class="hint" style="color:var(--ink)">${C.price?`<div>Price: <b>${esc(C.price)}</b></div>`:''}${C.h?`<div>Height: <b>${C.h}″</b></div>`:''}${C.back?`<div>Back height: <b>${C.back}″</b></div>`:''}${C.note?`<div class="hint">${esc(C.note)}</div>`:''}${C.url?`<div style="margin-top:4px"><a href="${esc(C.url)}" target="_blank" rel="noopener">Open listing ↗</a></div>`:''}</div>`;
+      if(S.products.some(p=>p.key===it.type)&&mode==='place') h+=`<button class="t danger" id="pDel" style="width:100%;margin-top:6px">Remove product from list</button>`; }
+  } else h+=`<h3>Selected</h3><p class="hint">Nothing selected.</p>`;
+  h+=`<h3>On the plan (${S.items.length})</h3><ul class="list">${S.items.map(i=>`<li data-id="${i.id}" class="${i.id===selId?'on':''}"><span>${esc(i.label)}</span><small>${i.w}×${i.d}${check(i).length?' ⚠︎':''}</small></li>`).join('')||'<li class="hint" style="cursor:default">none yet</li>'}</ul>`;
+  el.innerHTML=h;
+  const num=(id,k)=>{ const e=document.getElementById(id); if(e) e.onchange=()=>{ const v=Math.max(4,Math.min(200,+e.value||it[k])); it[k]=v; if(mode!=='place') save(); render(); }; };
+  num('iW','w'); num('iD','d');
+  const lb=document.getElementById('iLabel'); if(lb) lb.onchange=()=>{ it.label=lb.value.trim()||cat(it.type).name; if(mode!=='place') save(); render(); };
+  const on=(id,f)=>{ const e=document.getElementById(id); if(e) e.onclick=f; };
+  on('pDel',()=>{ const k=pending.type; S.products=S.products.filter(p=>p.key!==k); S.items=S.items.filter(i=>i.type!==k); cancelPlace(true); save(); render(); });
+  on('iRot',rotate); on('iCancel',cancelPlace); on('iDel',()=>{ S.items=S.items.filter(i=>i.id!==selId); selId=null; save(); render(); });
+  on('iDup',()=>{ const n={...it,id:++uid,cx:it.cx+6,cy:it.cy+6}; S.items.push(n); selId=n.id; save(); render(); });
+  el.querySelectorAll('.list li[data-id]').forEach(li=>li.onclick=()=>{ cancelPlace(true); selId=+li.dataset.id; render(); });
+}
+
+/* ================= interaction ================= */
+function startPlace(k){ const c=cat(k); mode='place'; selId=null; pending={type:k,label:c.name,w:c.w,d:c.d,rot:0,cx:W*0.7,cy:H*0.5,shown:false,id:-1}; render(); }
+function cancelPlace(quiet){ if(mode==='place'){ mode='idle'; pending=null; if(!quiet) render(); } }
+function rotate(){
+  const it= mode==='place'?pending:S.items.find(i=>i.id===selId); if(!it) return;
+  it.rot=(it.rot+90)%360; if(mode!=='place') save(); render();
+}
+const snap=v=>Math.round(v);
+function svgPt(e){ const p=svg.createSVGPoint(); p.x=e.clientX; p.y=e.clientY; const q=p.matrixTransform(svg.getScreenCTM().inverse()); return {x:q.x,y:q.y}; }
+function inside(it,pt){ const b=bbox(it); return pt.x>=b.x&&pt.x<=b.x+b.w&&pt.y>=b.y&&pt.y<=b.y+b.h; }
+function placeNow(){
+  if(check(pending).length) return false;
+  const n={id:++uid,type:pending.type,label:pending.label,w:pending.w,d:pending.d,rot:pending.rot,cx:pending.cx,cy:pending.cy};
+  S.items.push(n); mode='idle'; pending=null; selId=n.id; save(); render(); return true;
+}
+svg.addEventListener('pointermove',e=>{
+  const pt=svgPt(e);
+  if(mode==='place'&&pending&&e.pointerType==='mouse'){ pending.cx=snap(pt.x); pending.cy=snap(pt.y); pending.shown=true; render(); }
+  else if(drag){ const it=S.items.find(i=>i.id===drag.id); it.cx=snap(pt.x-drag.dx); it.cy=snap(pt.y-drag.dy); drag.moved=true; render(); }
+});
+svg.addEventListener('pointerleave',()=>{ if(mode==='place'&&pending&&pending.shown){ pending.shown=false; render(); } });
+svg.addEventListener('pointerdown',e=>{
+  const pt=svgPt(e);
+  if(mode==='place'&&pending){
+    if(e.pointerType!=='mouse'){ if(pending.shown&&inside(pending,pt)) placeNow(); else { pending.cx=snap(pt.x); pending.cy=snap(pt.y); pending.shown=true; render(); } }
+    else { pending.cx=snap(pt.x); pending.cy=snap(pt.y); pending.shown=true; placeNow(); }
+    return;
+  }
+  const g=e.target.closest('g.item');
+  if(g&&g.dataset.id){ const id=+g.dataset.id, it=S.items.find(i=>i.id===id); selId=id;
+    drag={id,dx:pt.x-it.cx,dy:pt.y-it.cy,ox:it.cx,oy:it.cy,moved:false}; svg.setPointerCapture(e.pointerId); render(); }
+  else { selId=null; render(); }
+});
+svg.addEventListener('pointerup',()=>{
+  if(drag){ const it=S.items.find(i=>i.id===drag.id); if(drag.moved&&check(it).length){ it.cx=drag.ox; it.cy=drag.oy; } drag=null; save(); render(); }
+});
+document.addEventListener('keydown',e=>{
+  if(['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)) return;
+  if(e.key==='r'||e.key==='R'){ rotate(); e.preventDefault(); }
+  else if(e.key==='Escape'){ if(mode==='place') cancelPlace(); else { selId=null; render(); } }
+  else if((e.key==='Delete'||e.key==='Backspace')&&selId&&mode!=='place'){ S.items=S.items.filter(i=>i.id!==selId); selId=null; save(); render(); e.preventDefault(); }
+  else if(selId&&mode!=='place'&&e.key.startsWith('Arrow')){
+    const it=S.items.find(i=>i.id===selId), st=e.shiftKey?6:1, ox=it.cx, oy=it.cy;
+    if(e.key==='ArrowLeft') it.cx-=st; if(e.key==='ArrowRight') it.cx+=st; if(e.key==='ArrowUp') it.cy-=st; if(e.key==='ArrowDown') it.cy+=st;
+    if(check(it).length&&!check({...it,cx:ox,cy:oy}).length){ it.cx=ox; it.cy=oy; }
+    save(); render(); e.preventDefault();
+  }
+});
+
+/* toolbar */
+const tb=(id,f)=>document.getElementById(id).onclick=f;
+const syncTB=()=>{ document.getElementById('tDims').textContent='Dimensions: '+(S.dims?'on':'off'); document.getElementById('tClr').textContent='Clearances: '+(S.clr?'on':'off'); };
+tb('tDims',()=>{ S.dims=!S.dims; save(); syncTB(); render(); });
+tb('tClr',()=>{ S.clr=!S.clr; save(); syncTB(); render(); });
+let clearArm=false;
+tb('tClear',()=>{ const b=document.getElementById('tClear'); if(!clearArm){ clearArm=true; b.textContent='Click again to clear'; setTimeout(()=>{clearArm=false;b.textContent='Clear all';},2500); return; }
+  S.items=[]; selId=null; cancelPlace(true); clearArm=false; b.textContent='Clear all'; save(); render(); });
+const modal=document.getElementById('modal'), mText=document.getElementById('mText');
+function layoutJSON(){ return JSON.stringify({unit:'in',room:{w:+W.toFixed(1),h:+H.toFixed(1),x:'entry→window',y:'kitchen wall→bedroom wall'},items:S.items.map(({id,...r})=>({...r,footprint:`${fw(r)}×${fd(r)}`}))},null,1); }
+tb('tCopy',()=>{ modal.style.display='flex'; document.getElementById('mTitle').textContent='Layout JSON'; document.getElementById('mHint').textContent='Copy this and paste it into the chat so Claude can see your layout.'; mText.value=layoutJSON(); document.getElementById('mOk').textContent='Copy'; modal.dataset.m='copy'; });
+tb('tImport',()=>{ modal.style.display='flex'; document.getElementById('mTitle').textContent='Import layout'; document.getElementById('mHint').textContent='Paste layout JSON (from Copy layout, or a layout Claude gives you).'; mText.value=''; document.getElementById('mOk').textContent='Import'; modal.dataset.m='import'; });
+tb('mCancel',()=>modal.style.display='none');
+tb('mOk',async()=>{
+  if(modal.dataset.m==='copy'){ try{ await navigator.clipboard.writeText(mText.value); document.getElementById('mOk').textContent='Copied ✓'; }catch(e){ mText.select(); document.getElementById('mHint').textContent='Auto-copy blocked here. The text is selected, so press Ctrl/⌘+C.'; } return; }
+  try{ const j=JSON.parse(mText.value); const arr=(j.items||j).filter(i=>CAT[i.type]||S.products.some(p=>p.key===i.type));
+    S.items=arr.map(i=>({id:++uid,type:i.type,label:i.label||cat(i.type).name,w:+i.w||cat(i.type).w,d:+i.d||cat(i.type).d,rot:(+i.rot||0)%360,cx:+i.cx,cy:+i.cy}));
+    save(); modal.style.display='none'; render(); }catch(e){ document.getElementById('mHint').textContent='Couldn\'t read that JSON: '+e.message; }
+});
+/* product modal */
+const pm=document.getElementById('pmodal'), $=id=>document.getElementById(id);
+$('pShape').innerHTML=Object.entries(SHAPES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+$('pColor').innerHTML='<option value="">default</option>'+Object.keys(COLORS).map(k=>`<option>${k}</option>`).join('');
+function openProd(){ ['pJson','pName','pUrl','pW','pD','pH','pBack','pPrice'].forEach(i=>$(i).value=''); $('pShape').value='sofa'; $('pColor').value=''; $('pErr').textContent=''; pm.style.display='flex'; }
+$('pJson').oninput=()=>{ try{ const j=JSON.parse($('pJson').value); $('pName').value=j.name||''; $('pUrl').value=j.url||''; $('pW').value=j.w||''; $('pD').value=j.d||''; $('pH').value=j.h||''; $('pBack').value=j.back||''; $('pPrice').value=j.price||''; if(SHAPES[j.shape]) $('pShape').value=j.shape; $('pColor').value=COLORS[j.color]?j.color:''; $('pChaise').value=j.chaise==='left'?'left':'right'; $('pJson').dataset.extra=JSON.stringify({seats:j.seats,arms:j.arms,chaiseW:j.chaiseW,seatD:j.seatD,note:j.note}); $('pErr').textContent=''; }catch(e){ $('pErr').textContent=$('pJson').value.trim()?'JSON not readable yet':''; } };
+$('pCancel').onclick=()=>pm.style.display='none';
+$('pSave').onclick=()=>{
+  const w=+$('pW').value, d=+$('pD').value; if(!$('pName').value.trim()||!(w>0)||!(d>0)){ $('pErr').textContent='Name, width and depth are required.'; return; }
+  let ex={}; try{ ex=JSON.parse($('pJson').dataset.extra||'{}'); }catch(e){}
+  const shape=$('pShape').value, p={key:'p'+(++uid), g:'My products', name:$('pName').value.trim(), w, d, draw:shape, url:$('pUrl').value.trim()||undefined, h:+$('pH').value||undefined, back:+$('pBack').value||undefined, price:$('pPrice').value.trim()||undefined, note:ex.note,
+    opt:{color:$('pColor').value||undefined, chaise:shape==='sectional'?$('pChaise').value:undefined, seats:ex.seats, arms:ex.arms, chaiseW:ex.chaiseW, seatD:ex.seatD}};
+  S.products.push(p); save(); pm.style.display='none'; $('pJson').dataset.extra=''; startPlace(p.key);
+};
+
+syncTB(); render();
+</script>
+</body>
+</html>
